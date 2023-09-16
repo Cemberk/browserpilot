@@ -47,6 +47,7 @@ class GPTSeleniumAgent:
         self,
         instructions="",
         chromedriver_path=None,
+        chat_model=None,
         chrome_options={},
         user_data_dir="user_data",
         headless=False,
@@ -94,6 +95,7 @@ class GPTSeleniumAgent:
         assert (
             chromedriver_path is not None
         ), "Please provide a path to the chromedriver executable."
+        self.chat_model = chat_model
         self.model_for_instructions = model_for_instructions
         self.model_for_responses = model_for_responses
         logger.info("Using model for instructions: {model}".format(model=model_for_instructions))
@@ -572,7 +574,7 @@ class GPTSeleniumAgent:
         """Retrieves information using using GPT-Index embeddings from a page."""
         text = self.get_text_from_page()
         chatgpt_kwargs = {"temperature": 0, "model_name": self.model_for_instructions}
-        llm_predictor = LLMPredictor(llm=ChatOllama(model="llama2")(**chatgpt_kwargs))
+        llm_predictor = LLMPredictor(llm=self.chat_model(**chatgpt_kwargs))
         service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
         index = GPTVectorStoreIndex.from_documents([Document(text=text)], service_context=service_context)
         logger.info(
@@ -632,7 +634,7 @@ class GPTSeleniumAgent:
 
         # Construct and query index.
         chatgpt_kwargs = {"temperature": 0, "model_name": self.model_for_instructions}
-        llm_predictor = LLMPredictor(llm=ChatOllama(model="llama2")(**chatgpt_kwargs))
+        llm_predictor = LLMPredictor(llm=self.chat_model(**chatgpt_kwargs))
         service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
         index = GPTVectorStoreIndex.from_documents(docs, service_context=service_context)
         query = "Find element that matches description: {element_description}. If no element matches, return {no_resp_token}.".format(
